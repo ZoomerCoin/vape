@@ -13,8 +13,8 @@ contract VapeToken is ERC20 {
     uint256 totalDividendsValueETH = 0;
 
     uint256 ethFee = 0; //accumulated eth fee
-    uint256 minInvest = 6700000000000000; // 0.0067 ETH
-    uint256 vapeTokenPrice = 6700000000000000; // 0.0067 ETH
+    uint256 minInvest = 0.0067 ether; // 0.0067 ETH
+    uint256 vapeTokenPrice = 0.0067 ether; // 0.0067 ETH
 
     uint256 lastPurchasedTime;
     address payable lastPurchasedAddress;
@@ -52,8 +52,8 @@ contract VapeToken is ERC20 {
         lastPurchasedTime = block.timestamp;
         lastPurchasedAddress = payable(msg.sender);
 
-        minInvest = minInvest + 1340000000000000; // 0.00134 ETH
-        vapeTokenPrice = vapeTokenPrice + 670000000000000; // 0.0067 ETH
+        minInvest = minInvest + 0.0134 ether; // 0.00134 ETH
+        vapeTokenPrice = vapeTokenPrice + 0.0067 ether; // 0.0067 ETH
 
         _mint(msg.sender, vapetokenvalue);
     }
@@ -72,8 +72,7 @@ contract VapeToken is ERC20 {
         payable(msg.sender).transfer(remainingDividend);
     }
 
-    function paydDevFee() public notPaused {
-        require(msg.sender == owner, "You are not the owner.");
+    function paydDevFee() public onlyOwner {
         owner.transfer(ethFee);
         ethFee = 0;
     }
