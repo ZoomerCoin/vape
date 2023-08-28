@@ -7,10 +7,10 @@ import {VapeToken} from "../src/VapeToken.sol";
 
 contract VapeTokenTest is Test {
     VapeToken vape;
-    address payable rewards = payable(address(1234567));
 
     function setUp() public {
-        vape = new VapeToken(rewards);
+        vape = new VapeToken();
+        vape.unpause();
     }
 
     function test_takeAVapeHit_failsIfPaused() public {
@@ -35,6 +35,7 @@ contract VapeTokenTest is Test {
             vm.prank(vm.addr(i));
             vm.deal(vm.addr(i), 1 ether);
             vape.takeAVapeHit{value: 0.0067 ether + (0.0067 ether * i)}();
+            emit log_named_uint("getMyDividend", vape.getMyDividend(vm.addr(i)));
         }
         emit log_named_uint("balance", address(vape).balance);
         emit log_named_uint("potValueETH", vape.potValueETH());

@@ -22,7 +22,7 @@ contract VapeToken is ERC20 {
     uint256 public lastPurchasedTime;
     address payable public lastPurchasedAddress;
 
-    bool public isPaused = false;
+    bool public isPaused = true;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "You are not the owner.");
@@ -34,11 +34,10 @@ contract VapeToken is ERC20 {
         _;
     }
 
-    constructor(address _rewardsContract) ERC20("Vape", "VAPE") {
+    constructor() ERC20("Vape", "VAPE") {
         owner = payable(msg.sender);
         lastPurchasedTime = block.timestamp;
         _mint(owner, devFund);
-        rewardsContract = payable(_rewardsContract);
     }
 
     function pause() public onlyOwner {
