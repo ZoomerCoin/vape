@@ -9,7 +9,7 @@ contract VapeToken is ERC20 {
     address payable owner;
     address payable public rewardsContract;
 
-    uint256 immutable public MIN_INVEST_TICK = 0.00067 ether;
+    uint256 public immutable MIN_INVEST_TICK = 0.00067 ether;
 
     uint256 public devFund = 200 ether; //dev fund value = 200vape
     uint256 public potValueETH = 0;
@@ -53,11 +53,8 @@ contract VapeToken is ERC20 {
         require(msg.value >= minInvest, "ETH value below min invest");
         require((block.timestamp - lastPurchasedTime) <= 86400, "Time is over, pot can be claimed by winner.");
 
-        uint256 amount = (msg.value * 85000) / 100000; // 10% for stakers and 5% for fees = 85% for pot + dividend
-        uint256 rewards = (msg.value * 10000) / 100000; // 10% for stakers
-        uint256 fee = msg.value - (amount + rewards);
-
-        // rewardsContract.transfer(rewards); // 10% for stakers transferred to rewards contract
+        uint256 amount = (msg.value * 90000) / 100000; // 10% fee used for buying ZOOMER
+        uint256 fee = msg.value - amount;
 
         collectedFee += fee;
         potValueETH += amount / 2;
