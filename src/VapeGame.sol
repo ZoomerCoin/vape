@@ -3,21 +3,20 @@ pragma solidity ^0.8.19;
 
 import "openzeppelin/token/ERC20/ERC20.sol";
 
-contract VapeToken is ERC20 {
+contract VapeGame is ERC20 {
     mapping(address => uint256) paidDividends;
 
-    address payable owner;
-    address payable public rewardsContract;
+    address payable public owner;
 
-    uint256 public immutable MIN_INVEST_TICK = 0.00067 ether;
+    uint256 public immutable MIN_INVEST_TICK = 0.01 ether;
 
     uint256 public devFund = 200 ether; //dev fund value = 200vape
     uint256 public potValueETH = 0;
     uint256 public totalDividendsValueETH = 0;
 
     uint256 public collectedFee = 0; //accumulated eth fee
-    uint256 public minInvest = 0.00067 ether;
-    uint256 public vapeTokenPrice = 0.00067 ether;
+    uint256 public minInvest = 0.05 ether;
+    uint256 public vapeTokenPrice = 0.05 ether;
 
     uint256 public lastPurchasedTime;
     address payable public lastPurchasedAddress;
@@ -40,12 +39,9 @@ contract VapeToken is ERC20 {
         _mint(owner, devFund);
     }
 
-    function pause() public onlyOwner {
-        isPaused = true;
-    }
-
-    function unpause() public onlyOwner {
+    function startGame() public onlyOwner {
         isPaused = false;
+        lastPurchasedTime = block.timestamp;
     }
 
     function takeAVapeHit() public payable notPaused {
@@ -64,7 +60,7 @@ contract VapeToken is ERC20 {
         lastPurchasedTime = block.timestamp;
         lastPurchasedAddress = payable(msg.sender);
 
-        minInvest = minInvest + (MIN_INVEST_TICK * 2);
+        minInvest = minInvest + MIN_INVEST_TICK;
         vapeTokenPrice = vapeTokenPrice + MIN_INVEST_TICK;
 
         _mint(msg.sender, vapetokenvalue);
@@ -92,29 +88,9 @@ contract VapeToken is ERC20 {
     function takeTheLastHit() public notPaused {
         require((block.timestamp >= lastPurchasedTime), "No."); //86400
         require((block.timestamp - lastPurchasedTime) > 86400, "Time is not over yet, countdown still running.");
-        lastPurchasedAddress.transfer(getETHPotValue());
+        lastPurchasedAddress.transfer(potValueETH);
         potValueETH = 0;
         isPaused = true;
-    }
-
-    function getvapeTokenPrice() public view returns (uint256) {
-        return vapeTokenPrice;
-    }
-
-    function getMinInvest() public view returns (uint256) {
-        return minInvest;
-    }
-
-    function getETHPotValue() public view returns (uint256) {
-        return potValueETH;
-    }
-
-    function getEthFeesValue() public view returns (uint256) {
-        return collectedFee;
-    }
-
-    function getLastPurchasedTime() public view returns (uint256) {
-        return lastPurchasedTime;
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {

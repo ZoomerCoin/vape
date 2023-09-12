@@ -3,20 +3,14 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import {VapeToken} from "../src/VapeToken.sol";
+import {VapeGame} from "../src/VapeGame.sol";
 
-contract VapeTokenTest is Test {
-    VapeToken vape;
+contract VapeGameTest is Test {
+    VapeGame vape;
 
     function setUp() public {
-        vape = new VapeToken();
-        vape.unpause();
-    }
-
-    function test_takeAVapeHit_failsIfPaused() public {
-        vape.pause();
-        vm.expectRevert("Contract is paused.");
-        vape.takeAVapeHit();
+        vape = new VapeGame();
+        vape.startGame();
     }
 
     function test_takeAVapeHit_failsIfBelowMinInvest() public {
