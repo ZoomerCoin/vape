@@ -2,16 +2,17 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin/token/ERC20/ERC20.sol";
+import "@chainlink/shared/access/ConfirmedOwner.sol";
+import "@chainlink/vrf/VRFV2WrapperConsumerBase.sol";
 
-contract VapeGame is ERC20 {
+contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     mapping(address => uint256) paidDividends;
-
-    address payable public owner;
 
     uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
 
     uint256 public devFund = 200 ether; //dev fund value = 200vape
     uint256 public potValueETH = 0;
+    uint256 public lottoValueETH = 0;
     uint256 public totalDividendsValueETH = 0;
 
     uint256 public collectedFee = 0; //accumulated eth fee
@@ -20,34 +21,41 @@ contract VapeGame is ERC20 {
 
     uint256 public lastPurchasedTime;
     address payable public lastPurchasedAddress;
+    mapping(uint256 => address) public hitters;
 
     ERC20 public zoomer;
     uint256 public numHits = 0;
     uint256 public immutable ZOOMER_HITS = 50;
     uint256 public immutable MIN_ZOOMER = 10000 ether;
-    uint256 public immutable GAME_TIME = 24 hours;
+    uint256 public immutable GAME_TIME;
+
+    uint32 callbackGasLimit = 100000;
+    uint32 numWords = 1;
+    uint16 requestConfirmations = 3;
+    address public linkAddress;
 
     bool public isPaused = true;
 
     event TookAHit(address indexed user, uint256 amount, uint256 vapeTokenValue);
     event GotDividend(address indexed user, uint256 amount);
     event TookTheLastHit(address indexed user, uint256 amount);
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "You are not the owner.");
-        _;
-    }
+    event LottoWon(address indexed user, uint256 amount);
 
     modifier notPaused() {
         require(!isPaused, "Contract is paused.");
         _;
     }
 
-    constructor(address _zoomer) ERC20("Vape", "VAPE") {
-        owner = payable(msg.sender);
+    constructor(uint256 _gameTime, address _zoomer, address _linkAddress, address _vrfV2Wrapper)
+        ERC20("Vape", "VAPE")
+        ConfirmedOwner(msg.sender)
+        VRFV2WrapperConsumerBase(_linkAddress, _vrfV2Wrapper)
+    {
+        GAME_TIME = _gameTime;
         zoomer = ERC20(_zoomer);
         lastPurchasedTime = block.timestamp;
-        _mint(owner, devFund);
+        linkAddress = _linkAddress;
+        _mint(owner(), devFund);
     }
 
     function startGame() public onlyOwner {
@@ -66,12 +74,15 @@ contract VapeGame is ERC20 {
             require(hasEnoughZoomer(msg.sender), "You need at least 10k ZOOMER to play the game.");
         }
 
+        hitters[numHits] = msg.sender;
         numHits++;
 
-        uint256 amount = (msg.value * 95000) / 100000; // 5% fee
-        uint256 fee = msg.value - amount;
+        uint256 amount = (msg.value * 90000) / 100000; // 10% removed: 5% for random winner, 5% for dev fund
+        uint256 lotto = (msg.value - amount) / 2;
+        uint256 fee = msg.value - amount - lotto;
 
         collectedFee += fee;
+        lottoValueETH += lotto;
         potValueETH += amount / 2;
         totalDividendsValueETH += amount / 2;
 
@@ -103,7 +114,7 @@ contract VapeGame is ERC20 {
     }
 
     function paydDevFee() public onlyOwner {
-        owner.transfer(collectedFee);
+        payable(owner()).transfer(collectedFee);
         collectedFee = 0;
     }
 
@@ -113,11 +124,25 @@ contract VapeGame is ERC20 {
         lastPurchasedAddress.transfer(potValueETH);
         potValueETH = 0;
         isPaused = true;
+        requestRandomness(callbackGasLimit, requestConfirmations, numWords);
         emit TookTheLastHit(msg.sender, potValueETH);
+    }
+
+    function fulfillRandomWords(uint256, /*_requestId*/ uint256[] memory _randomWords) internal override {
+        uint256 randomnumber = _randomWords[0] % numHits;
+        address winner = hitters[randomnumber];
+        payable(winner).transfer(lottoValueETH);
+        lottoValueETH = 0;
+        emit LottoWon(winner, lottoValueETH);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
-        require((msg.sender == owner || from == address(0)), "You are not the owner, only owner can transfer tokens.");
+        require((msg.sender == owner() || from == address(0)), "You are not the owner, only owner can transfer tokens.");
+    }
+
+    function withdrawLink() public onlyOwner {
+        LinkTokenInterface link = LinkTokenInterface(linkAddress);
+        require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
     }
 }
