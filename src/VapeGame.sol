@@ -14,6 +14,8 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     uint256 public potValueETH = 0;
     uint256 public lottoValueETH = 0;
     uint256 public totalDividendsValueETH = 0;
+    uint256 public finalPotValueETH = 0;
+    uint256 public finalLottoValueETH = 0;
 
     uint256 public collectedFee = 0; //accumulated eth fee
     uint256 public minInvest = 0.01 ether;
@@ -122,18 +124,20 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         require((block.timestamp >= lastPurchasedTime), "No.");
         require((block.timestamp - lastPurchasedTime) > GAME_TIME, "Time is not over yet, countdown still running.");
         lastPurchasedAddress.transfer(potValueETH);
+        emit TookTheLastHit(lastPurchasedAddress, potValueETH);
+        finalPotValueETH = potValueETH;
         potValueETH = 0;
         isPaused = true;
         requestRandomness(callbackGasLimit, requestConfirmations, numWords);
-        emit TookTheLastHit(msg.sender, potValueETH);
     }
 
     function fulfillRandomWords(uint256, /*_requestId*/ uint256[] memory _randomWords) internal override {
         uint256 randomnumber = _randomWords[0] % numHits;
         address winner = hitters[randomnumber];
         payable(winner).transfer(lottoValueETH);
-        lottoValueETH = 0;
         emit LottoWon(winner, lottoValueETH);
+        finalLottoValueETH = lottoValueETH;
+        lottoValueETH = 0;
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {

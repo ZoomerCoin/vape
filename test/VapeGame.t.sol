@@ -73,7 +73,7 @@ contract VapeGameTest is Test {
         assertEq(vape.balanceOf(ALICE) > 0, true);
     }
 
-    function test_e2eWorks() public {
+    function test_e2eWorks(uint256 randomWord) public {
         vm.mockCall(
             VRF_WRAPPER,
             abi.encodeWithSelector(VRFV2WrapperInterface.calculateRequestPrice.selector),
@@ -113,5 +113,10 @@ contract VapeGameTest is Test {
         before = vm.addr(10).balance;
         vape.takeTheLastHit();
         assertEq(vm.addr(10).balance > before, true);
+
+        uint256[] memory randomWords = new uint256[](1);
+        randomWords[0] = randomWord;
+        vm.prank(VRF_WRAPPER);
+        vape.rawFulfillRandomWords(0, randomWords);
     }
 }
