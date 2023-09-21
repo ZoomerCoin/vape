@@ -16,6 +16,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     uint256 public totalDividendsValueETH = 0;
     uint256 public finalPotValueETH = 0;
     uint256 public finalLottoValueETH = 0;
+    address public finalLottoWinner;
 
     uint256 public collectedFee = 0; //accumulated eth fee
     uint256 public minInvest = 0.01 ether;
@@ -138,6 +139,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         emit LottoWon(winner, lottoValueETH);
         finalLottoValueETH = lottoValueETH;
         lottoValueETH = 0;
+        finalLottoWinner = winner;
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
