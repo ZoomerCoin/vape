@@ -39,8 +39,16 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
 
     bool public isPaused = true;
 
-    event TookAHit(address indexed user, uint256 amount, uint256 vapeTokenValue);
-    event GotDividend(address indexed user, uint256 amount);
+    event TookAHit(
+        address indexed user,
+        uint256 amount,
+        uint256 vapeTokenValue,
+        uint256 potValueETH,
+        uint256 lottoValueETH,
+        uint256 totalDividendsValueETH,
+        uint256 nextHitPrice
+    );
+    event GotDividend(address indexed user, uint256 amount, uint256 totalDividendsValueETH);
     event TookTheLastHit(address indexed user, uint256 amount);
     event LottoWon(address indexed user, uint256 amount);
 
@@ -98,7 +106,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         vapeTokenPrice = vapeTokenPrice + MIN_INVEST_TICK;
 
         _mint(msg.sender, vapetokenvalue);
-        emit TookAHit(msg.sender, amount, vapetokenvalue);
+        emit TookAHit(msg.sender, amount, vapetokenvalue, potValueETH, lottoValueETH, totalDividendsValueETH, minInvest);
     }
 
     function getMyDividend(address useraddress) public view returns (uint256) {
@@ -113,7 +121,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         uint256 remainingDividend = getMyDividend(msg.sender);
         paidDividends[msg.sender] += remainingDividend;
         payable(msg.sender).transfer(remainingDividend);
-        emit GotDividend(msg.sender, remainingDividend);
+        emit GotDividend(msg.sender, remainingDividend, totalDividendsValueETH);
     }
 
     function paydDevFee() public onlyOwner {
