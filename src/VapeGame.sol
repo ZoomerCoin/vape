@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin/token/ERC20/ERC20.sol";
+import "openzeppelin/token/ERC721/IERC721.sol";
 import "@chainlink/shared/access/ConfirmedOwner.sol";
 import "@chainlink/vrf/VRFV2WrapperConsumerBase.sol";
 
@@ -27,6 +28,8 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     mapping(uint256 => address) public hitters;
 
     ERC20 public zoomer;
+    address[] public nfts;
+
     uint256 public numHits = 0;
     uint256 public immutable ZOOMER_HITS = 50;
     uint256 public immutable MIN_ZOOMER = 10000 ether;
@@ -57,13 +60,16 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         _;
     }
 
-    constructor(uint256 _gameTime, address _zoomer, address _linkAddress, address _vrfV2Wrapper)
+    constructor(uint256 _gameTime, address _zoomer, address[] memory _nfts, address _linkAddress, address _vrfV2Wrapper)
         ERC20("Vape", "VAPE")
         ConfirmedOwner(msg.sender)
         VRFV2WrapperConsumerBase(_linkAddress, _vrfV2Wrapper)
     {
         GAME_TIME = _gameTime;
         zoomer = ERC20(_zoomer);
+
+        nfts = _nfts;
+
         lastPurchasedTime = block.timestamp;
         linkAddress = _linkAddress;
         _mint(owner(), devFund);
@@ -78,11 +84,23 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         return zoomer.balanceOf(user) >= MIN_ZOOMER;
     }
 
+    function hasNft(address user) public view returns (bool) {
+        for (uint256 i = 0; i < nfts.length; i++) {
+            if (IERC721(nfts[i]).balanceOf(user) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function takeAVapeHit() public payable notPaused {
         require(msg.value >= minInvest, "ETH value below min invest");
         require((block.timestamp - lastPurchasedTime) <= GAME_TIME, "Time is over, pot can be claimed by winner.");
         if (numHits < ZOOMER_HITS) {
-            require(hasEnoughZoomer(msg.sender), "You need at least 10k ZOOMER to play the game.");
+            require(
+                hasEnoughZoomer(msg.sender) || hasNft(msg.sender),
+                "You need at least 10k ZOOMER or a whitelisted NFT to play the game."
+            );
         }
 
         hitters[numHits] = msg.sender;

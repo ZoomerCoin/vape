@@ -6,6 +6,7 @@ import "openzeppelin/token/ERC20/ERC20.sol";
 import "@chainlink/interfaces/VRFV2WrapperInterface.sol";
 
 import {VapeGame} from "../src/VapeGame.sol";
+import {TestNFT} from "./TestNFT.sol";
 
 contract TestZoomer is ERC20 {
     constructor() ERC20("ZoomerCoin", "ZOOMER") {
@@ -27,6 +28,7 @@ contract VapeGameTest is Test {
     VapeGame vape;
     TestZoomer zoomer;
     TestLink link;
+    TestNFT nft;
     address ALICE = address(1);
     address BOB = address(2);
     address VRF_WRAPPER = address(3);
@@ -36,8 +38,11 @@ contract VapeGameTest is Test {
         vm.deal(BOB, 1 ether);
         zoomer = new TestZoomer();
         zoomer.transfer(ALICE, 10000 ether);
+        nft = new TestNFT();
         link = new TestLink();
-        vape = new VapeGame(24 hours, address(zoomer), address(link), VRF_WRAPPER);
+        address[] memory nfts = new address[](1);
+        nfts[0] = address(nft);
+        vape = new VapeGame(24 hours, address(zoomer), nfts, address(link), VRF_WRAPPER);
         link.transfer(address(vape), 1000 ether);
         vape.startGame();
     }
@@ -57,20 +62,29 @@ contract VapeGameTest is Test {
         vape.takeAVapeHit{value: min}();
     }
 
-    function test_takeAVapeHit_failsIfBelowMinZoomer() public {
+    function test_takeAVapeHit_failsIfBelowMinZoomerAndNoNFT() public {
         zoomer.transfer(BOB, 9999 ether);
         uint256 min = vape.minInvest();
-        vm.expectRevert("You need at least 10k ZOOMER to play the game.");
+        vm.expectRevert("You need at least 10k ZOOMER or a whitelisted NFT to play the game.");
         vm.prank(BOB);
         vape.takeAVapeHit{value: min}();
     }
 
-    function test_takeAVapeHit_works() public {
+    function test_takeAVapeHit_worksWithZoomer() public {
         uint256 min = vape.minInvest();
         assertEq(vape.balanceOf(ALICE), 0);
         vm.prank(ALICE);
         vape.takeAVapeHit{value: min}();
         assertEq(vape.balanceOf(ALICE) > 0, true);
+    }
+
+    function test_takeAVapeHit_worksWithNFT() public {
+        uint256 min = vape.minInvest();
+        nft.mint(BOB, 9);
+        assertEq(vape.balanceOf(BOB), 0);
+        vm.prank(BOB);
+        vape.takeAVapeHit{value: min}();
+        assertEq(vape.balanceOf(BOB) > 0, true);
     }
 
     function test_e2eWorks(uint256 randomWord) public {
