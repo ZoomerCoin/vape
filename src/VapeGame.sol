@@ -106,14 +106,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         hitters[numHits] = msg.sender;
         numHits++;
 
-        uint256 amount = (msg.value * 90000) / 100000; // 10% removed: 5% for random winner, 5% for dev fund
-        uint256 lotto = (msg.value - amount) / 2;
-        uint256 fee = msg.value - amount - lotto;
-
-        collectedFee += fee;
-        lottoValueETH += lotto;
-        potValueETH += amount / 2;
-        totalDividendsValueETH += amount / 2;
+        uint256 amount = _processEtherReceived(msg.value);
 
         uint256 vapetokenvalue = (amount * 1e18) / vapeTokenPrice;
 
@@ -158,6 +151,17 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         requestRandomness(callbackGasLimit, requestConfirmations, numWords);
     }
 
+    function _processEtherReceived(uint256 _amount) internal returns (uint256 amount) {
+        amount = (_amount * 90000) / 100000; // 10% removed: 5% for random winner, 5% for dev fund
+        uint256 lotto = (_amount - amount) / 2;
+        uint256 fee = _amount - amount - lotto;
+
+        collectedFee += fee;
+        lottoValueETH += lotto;
+        potValueETH += amount / 2;
+        totalDividendsValueETH += amount / 2;
+    }
+
     function fulfillRandomWords(uint256, /*_requestId*/ uint256[] memory _randomWords) internal override {
         uint256 randomnumber = _randomWords[0] % numHits;
         address winner = hitters[randomnumber];
@@ -176,5 +180,9 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     function withdrawLink() public onlyOwner {
         LinkTokenInterface link = LinkTokenInterface(linkAddress);
         require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
+    }
+
+    receive() external payable {
+        _processEtherReceived(msg.value);
     }
 }
