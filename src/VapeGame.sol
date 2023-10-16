@@ -9,7 +9,7 @@ import "@chainlink/vrf/VRFV2WrapperConsumerBase.sol";
 contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     mapping(address => uint256) paidDividends;
 
-    uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
+    uint256 public immutable MIN_INVEST_TICK = 0.005 ether;
 
     uint256 public devFund = 200 ether; //dev fund value = 200vape
     uint256 public potValueETH = 0;
@@ -20,8 +20,8 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     address public finalLottoWinner;
 
     uint256 public collectedFee = 0; //accumulated eth fee
-    uint256 public minInvest = 0.01 ether;
-    uint256 public vapeTokenPrice = 0.01 ether;
+    uint256 public minInvest = 0.001 ether;
+    uint256 public vapeTokenPrice = 0.001 ether;
 
     uint256 public lastPurchasedTime;
     address payable public lastPurchasedAddress;
@@ -31,8 +31,8 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     address[] public nfts;
 
     uint256 public numHits = 0;
-    uint256 public immutable ZOOMER_HITS = 50;
-    uint256 public immutable MIN_ZOOMER = 10000 ether;
+    uint256 public immutable ZOOMER_HITS = 20;
+    uint256 public immutable MIN_ZOOMER = 10000000 ether;
     uint256 public immutable GAME_TIME;
 
     uint32 callbackGasLimit = 100000;
@@ -151,15 +151,20 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         requestRandomness(callbackGasLimit, requestConfirmations, numWords);
     }
 
-    function _processEtherReceived(uint256 _amount) internal returns (uint256 amount) {
-        amount = (_amount * 90000) / 100000; // 10% removed: 5% for random winner, 5% for dev fund
-        uint256 lotto = (_amount - amount) / 2;
-        uint256 fee = _amount - amount - lotto;
+    function _processEtherReceived(uint256 _amountIn) internal returns (uint256 amountOut) {
+        // Dividend - 35% Pot - 45% Treasury - 15% Lotto - 5%
+        uint256 _dividend = (_amountIn * 35000) / 100000;
+        uint256 _pot = (_amountIn * 45000) / 100000;
+        uint256 _treasury = (_amountIn * 15000) / 100000;
+        uint256 _lotto = _amountIn - _dividend - _pot - _treasury;
 
-        collectedFee += fee;
-        lottoValueETH += lotto;
-        potValueETH += amount / 2;
-        totalDividendsValueETH += amount / 2;
+        // amountOut is dividend and pot together
+        amountOut = _dividend + _pot; 
+
+        collectedFee += _treasury;
+        lottoValueETH += _lotto;
+        potValueETH += _pot;
+        totalDividendsValueETH += _dividend;
     }
 
     function fulfillRandomWords(uint256, /*_requestId*/ uint256[] memory _randomWords) internal override {

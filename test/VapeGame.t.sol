@@ -32,12 +32,13 @@ contract VapeGameTest is Test {
     address ALICE = address(1);
     address BOB = address(2);
     address VRF_WRAPPER = address(3);
+    uint256 MIN_ZOOMER = 10000000 ether;
 
     function setUp() public {
         vm.deal(ALICE, 1 ether);
         vm.deal(BOB, 1 ether);
         zoomer = new TestZoomer();
-        zoomer.transfer(ALICE, 10000 ether);
+        zoomer.transfer(ALICE, MIN_ZOOMER);
         nft = new TestNFT();
         link = new TestLink();
         address[] memory nfts = new address[](1);
@@ -95,7 +96,7 @@ contract VapeGameTest is Test {
         );
 
         for (uint256 i = 1; i <= 10; i++) {
-            zoomer.transfer(vm.addr(i), 10000 ether);
+            zoomer.transfer(vm.addr(i), MIN_ZOOMER);
             uint256 min = vape.minInvest();
             vm.deal(vm.addr(i), 1 ether);
             vm.prank(vm.addr(i));
