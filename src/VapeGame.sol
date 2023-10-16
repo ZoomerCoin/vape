@@ -9,7 +9,7 @@ import "@chainlink/vrf/VRFV2WrapperConsumerBase.sol";
 contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     mapping(address => uint256) paidDividends;
 
-    uint256 public immutable MIN_INVEST_TICK = 0.005 ether;
+    uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
 
     uint256 public devFund = 200 ether; //dev fund value = 200vape
     uint256 public potValueETH = 0;
@@ -75,7 +75,20 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         _mint(owner(), devFund);
     }
 
-    function startGame() public onlyOwner {
+    function withdrawLink() external onlyOwner {
+        LinkTokenInterface link = LinkTokenInterface(linkAddress);
+        require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
+    }
+
+    function sweep() external onlyOwner {
+        require(isPaused, "Can only sweep when paused.");
+        potValueETH = 0;
+        lottoValueETH = 0;
+        totalDividendsValueETH = 0;
+        payable(owner()).transfer(address(this).balance);
+    }
+
+    function startGame() external onlyOwner {
         isPaused = false;
         lastPurchasedTime = block.timestamp;
     }
@@ -180,11 +193,6 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
         require((msg.sender == owner() || from == address(0)), "You are not the owner, only owner can transfer tokens.");
-    }
-
-    function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(linkAddress);
-        require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
     }
 
     receive() external payable {
