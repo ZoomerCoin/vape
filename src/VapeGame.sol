@@ -11,7 +11,6 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
 
     uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
 
-    uint256 public devFund = 200 ether; //dev fund value = 200vape
     uint256 public potValueETH = 0;
     uint256 public lottoValueETH = 0;
     uint256 public totalDividendsValueETH = 0;
@@ -72,7 +71,6 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
 
         lastPurchasedTime = block.timestamp;
         linkAddress = _linkAddress;
-        _mint(owner(), devFund);
     }
 
     function withdrawLink() external onlyOwner {
@@ -172,7 +170,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         uint256 _lotto = _amountIn - _dividend - _pot - _treasury;
 
         // amountOut is dividend and pot together
-        amountOut = _dividend + _pot; 
+        amountOut = _dividend + _pot;
 
         collectedFee += _treasury;
         lottoValueETH += _lotto;
