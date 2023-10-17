@@ -10,6 +10,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     mapping(address => uint256) paidDividends;
 
     uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
+    uint256 public immutable VAPE_PRICE_TICK = 0.0005 ether;
 
     uint256 public potValueETH = 0;
     uint256 public lottoValueETH = 0;
@@ -18,9 +19,9 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     uint256 public finalLottoValueETH = 0;
     address public finalLottoWinner;
 
-    uint256 public collectedFee = 0; //accumulated eth fee
-    uint256 public minInvest = 0.001 ether;
-    uint256 public vapeTokenPrice = 0.001 ether;
+    uint256 public collectedFee = 0; // accumulated eth fee
+    uint256 public minInvest = 0.0005 ether;
+    uint256 public vapeTokenPrice = 0.0005 ether;
 
     uint256 public lastPurchasedTime;
     address payable public lastPurchasedAddress;
@@ -110,7 +111,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         if (numHits < ZOOMER_HITS) {
             require(
                 hasEnoughZoomer(msg.sender) || hasNft(msg.sender),
-                "You need at least 10k ZOOMER or a whitelisted NFT to play the game."
+                "You need at least MIN_ZOOMER or a whitelisted NFT to play the game."
             );
         }
 
@@ -125,7 +126,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         lastPurchasedAddress = payable(msg.sender);
 
         minInvest = minInvest + MIN_INVEST_TICK;
-        vapeTokenPrice = vapeTokenPrice + MIN_INVEST_TICK;
+        vapeTokenPrice = vapeTokenPrice + VAPE_PRICE_TICK;
 
         _mint(msg.sender, vapetokenvalue);
         emit TookAHit(msg.sender, amount, vapetokenvalue, potValueETH, lottoValueETH, totalDividendsValueETH, minInvest);
