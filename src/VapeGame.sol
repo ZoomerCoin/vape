@@ -167,10 +167,9 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     }
 
     function _processEtherReceived(uint256 _amountIn) internal returns (uint256 amountOut) {
-        // Dividend - 35% Pot - 45% Treasury - 15% Lotto - 5%
-        uint256 _dividend = (_amountIn * 35000) / 100000;
-        uint256 _pot = (_amountIn * 45000) / 100000;
-        uint256 _treasury = (_amountIn * 15000) / 100000;
+        uint256 _dividend = (_amountIn * DIVIDEND_CONTRIBUTION * 1000) / 100000;
+        uint256 _pot = (_amountIn * POT_CONTRIBUTION * 1000) / 100000;
+        uint256 _treasury = (_amountIn * TREASURY_CONTRIBUTION * 1000) / 100000;
         uint256 _lotto = _amountIn - _dividend - _pot - _treasury;
 
         // amountOut is dividend and pot together
