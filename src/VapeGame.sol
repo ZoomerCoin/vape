@@ -7,40 +7,43 @@ import "@chainlink/shared/access/ConfirmedOwner.sol";
 import "@chainlink/vrf/VRFV2WrapperConsumerBase.sol";
 
 contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
-    mapping(address => uint256) paidDividends;
-
-    uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
+    // game config params
+    uint256 public immutable MIN_INVEST_TICK = 0.01 ether;
     uint256 public immutable VAPE_PRICE_TICK = 0.0005 ether;
+    uint256 public immutable DIVIDEND_CONTRIBUTION = 35; // 35%
+    uint256 public immutable POT_CONTRIBUTION = 35; // 35%
+    uint256 public immutable TREASURY_CONTRIBUTION = 15; // 15%
+    uint256 public immutable LOTTO_CONTRIBUTION = 15; // 15%
+    uint256 public minInvest = 0.001 ether;
+    uint256 public vapeTokenPrice = 0.0005 ether;
+    uint256 public immutable ZOOMER_HITS = 20;
+    uint256 public immutable MIN_ZOOMER = 10000000 ether;
+    uint256 public immutable GAME_TIME;
 
+    // game state
     uint256 public potValueETH = 0;
     uint256 public lottoValueETH = 0;
     uint256 public totalDividendsValueETH = 0;
     uint256 public finalPotValueETH = 0;
     uint256 public finalLottoValueETH = 0;
     address public finalLottoWinner;
-
     uint256 public collectedFee = 0; // accumulated eth fee
-    uint256 public minInvest = 0.0005 ether;
-    uint256 public vapeTokenPrice = 0.0005 ether;
-
     uint256 public lastPurchasedTime;
     address payable public lastPurchasedAddress;
     mapping(uint256 => address) public hitters;
+    mapping(address => uint256) paidDividends;
+    uint256 public numHits = 0;
+    bool public isPaused = true;
 
+    // whitelisted tokens/nfts
     ERC20 public zoomer;
     address[] public nfts;
 
-    uint256 public numHits = 0;
-    uint256 public immutable ZOOMER_HITS = 20;
-    uint256 public immutable MIN_ZOOMER = 10000000 ether;
-    uint256 public immutable GAME_TIME;
-
+    // chainlink stuff
     uint32 callbackGasLimit = 100000;
     uint32 numWords = 1;
     uint16 requestConfirmations = 3;
     address public linkAddress;
-
-    bool public isPaused = true;
 
     event TookAHit(
         address indexed user,
