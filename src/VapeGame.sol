@@ -8,13 +8,13 @@ import "@chainlink/vrf/VRFV2WrapperConsumerBase.sol";
 
 contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
     // game config params
-    uint256 public immutable MIN_INVEST_TICK = 0.01 ether;
+    uint256 public immutable MIN_INVEST_TICK = 0.001 ether;
     uint256 public immutable VAPE_PRICE_TICK = 0.0005 ether;
     uint256 public immutable DIVIDEND_CONTRIBUTION = 35; // 35%
     uint256 public immutable POT_CONTRIBUTION = 35; // 35%
     uint256 public immutable TREASURY_CONTRIBUTION = 15; // 15%
     uint256 public immutable LOTTO_CONTRIBUTION = 15; // 15%
-    uint256 public minInvest = 0.001 ether;
+    uint256 public minInvest = 0.01 ether;
     uint256 public vapeTokenPrice = 0.0005 ether;
     uint256 public immutable ZOOMER_HITS = 20;
     uint256 public immutable MIN_ZOOMER = 10000000 ether;
