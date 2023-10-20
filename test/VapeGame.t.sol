@@ -66,7 +66,7 @@ contract VapeGameTest is Test {
     function test_takeAVapeHit_failsIfBelowMinZoomerAndNoNFT() public {
         zoomer.transfer(BOB, 9999 ether);
         uint256 min = vape.minInvest();
-        vm.expectRevert("You need at least 10k ZOOMER or a whitelisted NFT to play the game.");
+        vm.expectRevert("You need at least MIN_ZOOMER or a whitelisted NFT to play the game.");
         vm.prank(BOB);
         vape.takeAVapeHit{value: min}();
     }
