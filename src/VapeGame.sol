@@ -155,7 +155,7 @@ contract VapeGame is ERC20, VRFV2WrapperConsumerBase, ConfirmedOwner {
         collectedFee = 0;
     }
 
-    function takeTheLastHit() public notPaused {
+    function takeTheLastHit() public onlyOwner notPaused {
         require((block.timestamp >= lastPurchasedTime), "No.");
         require((block.timestamp - lastPurchasedTime) > GAME_TIME, "Time is not over yet, countdown still running.");
         lastPurchasedAddress.transfer(potValueETH);
